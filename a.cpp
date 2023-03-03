@@ -8,11 +8,13 @@ using namespace std;
 #define ff first
 
 class Vertex{
+public:
     int x,y;
     Edge *inc_edge;
 };
 
 class Edge{
+public:
     Vertex *start;
     Vertex *end;
     Edge *twin;
@@ -23,6 +25,7 @@ class Edge{
 };
 
 class Face{
+public:
     Edge *inc_edge;
 };
 
