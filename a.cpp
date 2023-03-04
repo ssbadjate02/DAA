@@ -285,10 +285,23 @@ void solve(vector<pair<double, double>> &points, DCEL* polygon)
     }
 }
 
+bool isClockwise(vector<pair<double,double>> points)
+{
+    int end = points.size() - 1;
+    double area = (points[end].first)*points[0].second - (points[0].first)*points[end].second;
+    for(int i=0; i<end; ++i) {
+        int j=i+1;
+        area += points[i].first*points[j].second - points[j].first*points[i].second;
+    }
+    return area<0;
+    
+}
+
 int main()
 {
     FASTIO;
     vector<pair<double, double>> points = {{0.0, 0.0}, {0.0, 2.0},{1.0, 1.0}, {2.0, 2.0},{2.0, 0.0}, {1.0,-1.0}};
+    if(!isClockwise(points)) reverse(all(points));
     DCEL *polygon = new DCEL(points);
     //polygon->print();
     cout << is_greater_than_180(new Vertex(0, 0), new Vertex(0, 2), new Vertex(1, 1));
