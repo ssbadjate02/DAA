@@ -48,7 +48,7 @@ if __name__ == "__main__":
             edgeList += [[[int(line[0]),(int)(line[1])],[(int)(line[2]),(int)(line[3])]]]
             # print(line)
             
-        print(edgeList);
+        print(edgeList)
         drawPolyLine(edgeList)
 
         # Second square
