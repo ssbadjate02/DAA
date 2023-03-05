@@ -8,7 +8,7 @@ def drawPolyLine(edges):
     """ draw shapes using a list of coordinates """
     turtle.pencolor('cyan')
     turtle.bgcolor('pink')    
-    turtle.speed(1)
+    turtle.speed(3)
     turtle.pensize(2.5)
     turtle.penup()
 

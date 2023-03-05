@@ -58,6 +58,7 @@ public:
     vector<Vertex *> vertices;
     vector<Edge *> edges;
     vector<Face *> faces;
+    vector<Edge*> diag;
     DCEL(vector<pair<double, double>> &points)
     {
         for (pair<double, double> point : points)
@@ -125,7 +126,12 @@ public:
     
         edges.push_back(new_edge);
         edges.push_back(new_edge_twin);
-    
+
+        diag.push_back(new_edge);
+        diag.push_back(new_edge_twin);
+
+        v1->inc_edge = new_edge;
+        v2->inc_edge = new_edge_twin;
         Edge *curr = v2->inc_edge;
         /* figure out how to add faces
         faces.push_back(new Face());
@@ -215,7 +221,9 @@ public:
     {
         freopen("inputPy.txt", "w", stdout);
         for(auto i : edges)
-            cout<<i->start->x*10<<" "<<i->start->y*10<<" "<<i->end->x*10<<" "<<i->end->y*10<<"\n";
+            cout<<i->start->x*30<<" "<<i->start->y*30<<" "<<i->end->x*30<<" "<<i->end->y*30<<"\n";
+        // for(auto i : edges)
+            // cout<<"EDGE = "<<i->x<<
     }
     
     void print()
@@ -238,8 +246,68 @@ public:
             cout << "\n";
         }
     }
-    /*
-        */
+    void delete_edge(Edge *edge)
+    {
+        auto edge_twin = edge->twin;
+        edges.erase(find(all(edges),edge));
+        edges.erase(find(all(edges),edge_twin));
+
+
+        auto prev_next = edge->twin->next;//next of previous
+        auto next_prev = edge->twin->prev;// previous of next
+        auto twin_next_prev = edge->next; //twin's next of previous
+        auto twin_prev_next = edge->prev; // twins previous of next
+
+        edge->next->prev = next_prev;
+        edge->next->twin->next = next_prev->twin;
+
+        edge->prev->next = prev_next;
+        edge->prev->twin->prev = prev_next->twin;
+
+        edge_twin->next->prev = twin_prev_next;
+        edge_twin->next->twin->next = twin_prev_next->twin;
+
+        edge_twin->next->prev = twin_next_prev;
+        edge_twin->next->twin->next = twin_next_prev->twin;
+
+        delete edge;
+        delete edge_twin;
+    }
+    void merge()
+    {
+        int m = diag.size();
+        int np = m+1;
+        vector<bool> LDP(np,1);
+        vector<int> LUP(np);
+        for(int i=0;i<np;i++) LUP[i] = 1;
+
+        for(int i=0;i<diag.size();i++)
+        {
+            if(!LDP[i]) continue;
+            auto edge = diag[i];
+            auto edge_twin = edge->twin;
+            Vertex *v1 = edge->prev->start;
+            Vertex *v2 = edge->start;
+            Vertex *v3 = edge_twin->next->end;
+            Vertex *w3 = edge->next->end;
+            Vertex *w2 = edge->end;
+            Vertex *w1 = edge_twin->prev->start;
+            cout<<"VERTEX\n";
+            print_vertex(v1);
+            print_vertex(v2);
+            print_vertex(v3);
+            print_vertex(w1);
+            print_vertex(w2);
+            print_vertex(w3);
+            if(!is_greater_than_180(v1,v2,v3) && !is_greater_than_180(w1,w2,w3))
+            {
+                np++;
+                LDP[i] = 0;
+                LDP[find(all(diag),edge_twin)-diag.begin()] = 0;
+                delete_edge(edge);
+            }
+        }
+    }
 };
     
 bool is_same_sign(double a, double b)
@@ -439,15 +507,25 @@ void solve(vector<pair<double, double>> &points, DCEL *polygon)
     for (auto l : L)
     {
         // cout<<"/*\n";
-        polygon->add_edge(polygon->find_vertex(l[0].first, l[0].second), polygon->find_vertex(l[l.size() - 1].first, l[l.size() - 1].second));
+        polygon->add_edge(polygon->find_vertex(l[l.size() - 1].first, l[l.size() - 1].second),polygon->find_vertex(l[0].first, l[0].second));
         // cout<<"*/\n";
-        for (auto p : l)
-            cout << p.first << " " << p.second << "\n";
-        cout << "----\n\n";
+        // for (auto p : l)
+        //     cout << p.first << " " << p.second << "\n";
+        // cout << "----\n\n";
     }
 }
 
-
+bool isClockwise(vector<pair<double,double>> points)
+{
+    int end = points.size() - 1;
+    double area = (points[end].first)*points[0].second - (points[0].first)*points[end].second;
+    for(int i=0; i<end; ++i) {
+        int j=i+1;
+        area += points[i].first*points[j].second - points[j].first*points[i].second;
+    }
+    return area<0;
+    
+}
     
 int main()
 {
@@ -457,15 +535,27 @@ int main()
     vector<pair<double, double>> points(n);
     for (int i = 0; i < n; i++)
         cin >> points[i].first >> points[i].second;
+    
+    if(!isClockwise(points)) reverse(all(points));
+    DCEL *ans =NULL;
     DCEL *polygon = new DCEL(points);
+    solve(points, polygon);
+    // polygon->add_edge(polygon->find_vertex(0,0),polygon->find_vertex(2,1));
+    // polygon->add_edge(polygon->find_vertex(2,1),polygon->find_vertex(0,2));
+
+    // for(ll i=0;i<points.size();i++)
+    // {
+    //     DCEL *polygon = new DCEL(points);
+    //     solve(points, polygon);
+    //     if(ans ==NULL || polygon->edges.size()<ans->edges.size()) ans = polygon;
+    // }
     // polygon->print();
     // cout << is_greater_than_180(new Vertex(0, 0), new Vertex(2, 0), new Vertex(1, 1));
     // polygon->add_edge(polygon->find_vertex(1.0,1.0),polygon->find_vertex(0.0,0.0));
     // polygon->print();
     //polygon->write_edges();
-    solve(points, polygon);
-    polygon->write_edges();
-    
+    polygon->merge();
+    polygon ->write_edges();
     /*
     vector<Vertex*> v = polygon->find_notch_vertices(polygon->vertices);
     for(auto i : v)
