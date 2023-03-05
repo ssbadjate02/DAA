@@ -86,11 +86,11 @@ public:
         }
 
         n = edges.size();
-        faces.push_back(new Face());
-        faces.push_back(new Face());
+        // faces.push_back(new Face());
+        // faces.push_back(new Face());
 
-        faces[0]->inc_edge = edges[0];
-        faces[1]->inc_edge = edges[1];
+        // faces[0]->inc_edge = edges[0];
+        // faces[1]->inc_edge = edges[1];
         for (int i = 0; i < n; i += 2)
         {
             edges[i]->next = edges[(i + 2) % n];
@@ -99,8 +99,8 @@ public:
             edges[(i + 1) % n]->prev = edges[(i + 3) % n];
             edges[(i + 3) % n]->next = edges[(i + 1) % n];
 
-            edges[i]->face = faces[0];
-            edges[(i + 1) % n]->face = faces[1];
+            // edges[i]->face = faces[0];
+            // edges[(i + 1) % n]->face = faces[1];
         }
     }
 
@@ -132,7 +132,7 @@ public:
 
         // v1->inc_edge = new_edge;
         v2->inc_edge = new_edge_twin;
-        Edge *curr = v2->inc_edge;
+        // Edge *curr = v2->inc_edge;
         /* figure out how to add faces
         faces.push_back(new Face());
         faces.push_back(new Face());
@@ -154,6 +154,25 @@ public:
         curr->face = faces[faces.size()-1];
         */
         return true;
+    }
+    void set_faces()
+    {
+        for (int i = 0; i < edges.size(); i += 2)
+        {
+            if (edges[i]->face == NULL)
+            {
+                Edge *curr = edges[i];
+                Face *f = new Face();
+                faces.push_back(f);
+                curr->face = f;
+                curr = curr->next;
+                while (curr != edges[i])
+                {
+                    curr->face = f;
+                    curr = curr->next;
+                }
+            }
+        }
     }
     /*
     HELPER FUNCTIONS
@@ -220,7 +239,7 @@ public:
     void write_edges()
     {
         for (auto i : edges)
-            cout << i->start->x*30<< " " << i->start->y*30 << " " << i->end->x *30<< " " << i->end->y *30<< "\n";
+            cout << i->start->x * 30 - 300 << " " << i->start->y * 30 - 300 << " " << i->end->x * 30 - 300 << " " << i->end->y * 30 - 300 << "\n";
         // for(auto i : edges)
         // cout<<"EDGE = "<<i->x<<
     }
@@ -257,16 +276,16 @@ public:
         auto twin_prev_next = edge->prev;  // twins previous of next
 
         edge->next->prev = next_prev;
-        //edge->next->twin->next = next_prev->twin;
+        // edge->next->twin->next = next_prev->twin;
 
         edge->prev->next = prev_next;
-        //edge->prev->twin->prev = prev_next->twin;
+        // edge->prev->twin->prev = prev_next->twin;
 
         edge_twin->next->prev = twin_prev_next;
-        //edge_twin->next->twin->next = twin_prev_next->twin;
+        // edge_twin->next->twin->next = twin_prev_next->twin;
 
         edge_twin->prev->next = twin_next_prev;
-        //edge_twin->next->twin->next = twin_next_prev->twin;
+        // edge_twin->next->twin->next = twin_next_prev->twin;
 
         delete edge;
         delete edge_twin;
@@ -377,14 +396,13 @@ vector<pair<double, double>> find_smallest_rectangle(vector<Vertex *> &vertices)
     return ans;
 }
 
-void solve(vector<pair<double, double>> &points, DCEL *polygon)
+vector<vector<pair<double, double>>> solve(vector<pair<double, double>> points, DCEL *polygon, int s, vector<vector<pair<double, double>>> first_polygons)
 {
     vector<vector<pair<double, double>>> L;
     vector<pair<double, double>> curr_l;
-    curr_l.push_back(points[0]);
+    curr_l.push_back(points[s]);
     L.push_back(curr_l);
-    Vertex *v0 = polygon->find_vertex(points[0].first, points[0].second);
-
+    Vertex *v0 = polygon->find_vertex(points[s].first, points[s].second);
     int ptr = 0;
     while (points.size() > 3)
     {
@@ -422,7 +440,6 @@ void solve(vector<pair<double, double>> &points, DCEL *polygon)
             continue;
         }
         // cout <<"i :  "<< i <<"n : "<<n<< "\n";
-
         if (curr_l.size() != points.size())
         {
             vector<Vertex *> curr_polygon;
@@ -486,9 +503,26 @@ void solve(vector<pair<double, double>> &points, DCEL *polygon)
                 }
             }
         }
+        if (first_polygons.size() < (s + 1) && curr_l.size() > 2)
+        {
+            // is it redunt to sort ?
+            vector<pair<double, double>> curr_copy = curr_l;
+            sort(curr_copy.begin(), curr_copy.end());
+            first_polygons.push_back(curr_copy);
+            if (first_polygons.size() > 1 && first_polygons[first_polygons.size() - 2] == curr_copy)
+            {
+                L.clear();
+                return L;
+            }
+        }
         // cout<<points.size()<<" "<<curr_l.size()<<"\n";
         for (int j = 1; j < curr_l.size() - 1; j++)
-            points.erase(points.begin() + ptr);
+            points.erase(find(points.begin(), points.end(), curr_l[j]));
+        /*
+        for(auto p : points)
+            cout<<p.first<<" "<<p.second<<"\n";
+        cout<<"\n";
+        */
         L.push_back(curr_l);
     }
     // cout << points.size() << "\n";
@@ -502,15 +536,7 @@ void solve(vector<pair<double, double>> &points, DCEL *polygon)
     }
     L.push_back(curr_l);
     */
-    for (auto l : L)
-    {
-        // cout<<"/*\n";
-        polygon->add_edge(polygon->find_vertex(l[l.size() - 1].first, l[l.size() - 1].second), polygon->find_vertex(l[0].first, l[0].second));
-        // cout<<"*/\n";
-        // for (auto p : l)
-        //     cout << p.first << " " << p.second << "\n";
-        // cout << "----\n\n";
-    }
+    return L;
 }
 
 bool isClockwise(vector<pair<double, double>> points)
@@ -528,7 +554,7 @@ bool isClockwise(vector<pair<double, double>> points)
 int main()
 {
     FASTIO;
-    freopen("inputPy.txt", "w", stdout);
+    // freopen("inputPy.txt", "w", stdout);
     int n;
     cin >> n;
     vector<pair<double, double>> points(n);
@@ -539,7 +565,53 @@ int main()
         reverse(all(points));
     DCEL *ans = NULL;
     DCEL *polygon = new DCEL(points);
-    solve(points, polygon);
+    vector<vector<vector<pair<double, double>>>> OS;
+    vector<vector<pair<double, double>>> first_polygons;
+    long long CARD = 1e9;
+    int s = 0;
+    while (s < n)
+    {
+        vector<vector<pair<double, double>>> L = solve(points, polygon, s, first_polygons);
+        // cout << L.size() << "\n";
+        int Ds = 0;
+        for (auto l : L)
+        {
+            if (l.size() >= 3)
+                Ds++;
+        }
+        // cout<<Ds<<"\n";
+        if (Ds == CARD)
+            OS.push_back(L);
+        else if (Ds < CARD)
+        {
+            CARD = Ds;
+            OS.clear();
+            OS.push_back(L);
+        }
+        s++;
+        bool new_first_polygon = false;
+        // cout<<s<<" ";
+        while (s < n && !new_first_polygon)
+        {
+            L = solve(points, polygon, s, first_polygons);
+            if (L.size() == 0)
+                s++;
+            else
+                new_first_polygon = true;
+        }
+        // cout<<s<<" "<<endl;
+    }
+    // cout<<CARD<<" "<<OS.size()<<"\n";
+    for (auto l : OS[0])
+    {
+        // cout<<"/*\n";
+        polygon->add_edge(polygon->find_vertex(l[l.size() - 1].first, l[l.size() - 1].second), polygon->find_vertex(l[0].first, l[0].second));
+        // cout<<"*/\n";
+        // for (auto p : l)
+        //     cout << p.first << " " << p.second << "\n";
+        // cout << "----\n\n";
+    }
+    polygon->set_faces();
     // polygon->add_edge(polygon->find_vertex(1,-1),polygon->find_vertex(3,0));
     // polygon->add_edge(polygon->find_vertex(0,0),polygon->find_vertex(3,0));
     // polygon->add_edge(polygon->find_vertex(1, 1), polygon->find_vertex(3, 0));
@@ -554,11 +626,11 @@ int main()
     // cout << is_greater_than_180(new Vertex(0, 0), new Vertex(2, 0), new Vertex(1, 1));
     // polygon->add_edge(polygon->find_vertex(1.0,1.0),polygon->find_vertex(0.0,0.0));
     // polygon->print();
-    //polygon->write_edges();
-    //polygon->print();
-    polygon->merge();
-    //polygon->print();
-    polygon->write_edges();
+    // polygon->write_edges();
+    polygon->print();
+    // polygon->merge();
+    //  polygon->print();
+    // polygon->write_edges();
     /*
     vector<Vertex*> v = polygon->find_notch_vertices(polygon->vertices);
     for(auto i : v)
