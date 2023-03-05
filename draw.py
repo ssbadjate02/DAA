@@ -38,6 +38,11 @@ if __name__ == "__main__":
         # Shape = [(50, 0), (50, 50), (0, 50), (0, 0)]
         file = open("inputPy.txt", "r")
         edgeList = []
+        maxx = 0
+        maxy = 0
+        minx = 10000000
+        miny = 10000000
+
         while True:
             line = file.readline().split(' ')
             if line == ['']:
@@ -45,10 +50,23 @@ if __name__ == "__main__":
                 # we'll assume EOF, because we don't have a choice with the while loop!
                 break
             if(line[3][-1]=='\n'): line[3] = line[3][:-1]
-            edgeList += [[[int(line[0]),(int)(line[1])],[(int)(line[2]),(int)(line[3])]]]
+            if(len(line)>=4): 
+                edgeList += [[[float(line[0]),(float)(line[1])],[(float)(line[2]),(float)(line[3])]]]
+                maxx = max(maxx,float(line[0]),float(line[2]))
+                maxy = max(maxy,float(line[1]),float(line[3]))
+                minx = min(minx,float(line[0]),float(line[2]))
+                miny = min(miny,float(line[1]),float(line[3]))
+
+
             # print(line)
-            
-        print(edgeList)
+        print(maxx," ",minx," ",maxy," ",miny)
+        for i in range(len(edgeList)):
+            edgeList[i][0][0] *= ((400)/(maxx-minx))
+            edgeList[i][0][1] *= ((400)/(maxy-miny))
+            edgeList[i][1][0] *= ((400)/(maxx-minx))
+            edgeList[i][1][1] *= ((400)/(maxy-miny))
+
+        # print(edgeList)
         drawPolyLine(edgeList)
 
         # Second square
