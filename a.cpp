@@ -1,15 +1,43 @@
 #include <bits/stdc++.h>
 using namespace std;
+#include "simple_svg_1.0.0.hpp"
+using namespace svg;
 #define ll long long
 #define pb push_back
 #define FASTIO ios_base::sync_with_stdio(false), cin.tie(NULL), cout.tie(NULL)
 #define all(x) (x).begin(), (x).end()
 #define ss second
 #define ff first
+class Visualize;
 class Vertex;
 class Edge;
 class Face;
 class DCEL;
+Document *doc;
+double maxx;
+double maxy;
+double minx;
+double miny;
+Color genRandomColour()
+{
+    int r = (rand() % (256));
+    int g = (rand() % (256));
+    int b = (rand() % (256));
+    Color color(r,g,b);
+    return color;
+}
+void draw_polygon(vector<double> x,vector<double> y)
+{
+    for(int i=0;i<x.size();i++)
+    {
+        x[i] = (x[i] - minx)*(30)/(maxx-minx)+30;
+        y[i] = (y[i] - miny)*(30)/(maxy-miny)+30;
+    }
+    Polygon poly(genRandomColour(), Stroke(0.3, Color(150, 160, 200)));
+    for(int i=0;i<x.size();i++) poly<<Point(x[i],y[i]);
+    *doc<<poly;
+}
+
 pair<double, double> get_vector(Vertex *, Vertex *);
 bool is_greater_than_180(Vertex *, Vertex *, Vertex *);
 
@@ -166,11 +194,22 @@ public:
                 faces.push_back(f);
                 curr->face = f;
                 curr = curr->next;
+                vector<double> facex;
+                vector<double> facey;
                 while (curr != edges[i])
                 {
+                    // cout<<curr->start->x<<" "<<curr->start->y<<" ";
+                    facex.push_back(curr->start->x);
+                    facey.push_back(curr->start->y);
                     curr->face = f;
                     curr = curr->next;
                 }
+                facex.push_back(curr->start->x);
+                facey.push_back(curr->start->y);
+                draw_polygon(facex,facey);
+                facex.clear();
+                facey.clear();
+                // cout<<curr->start->x<<" "<<curr->start->y<<"\n";
             }
         }
     }
@@ -238,8 +277,11 @@ public:
 
     void write_edges()
     {
-        for (auto i : edges)
+        for (int j=0;j<edges.size();j+=2)
+        {
+            auto i = edges[j];
             cout << i->start->x * 30 - 300 << " " << i->start->y * 30 - 300 << " " << i->end->x * 30 - 300 << " " << i->end->y * 30 - 300 << "\n";
+        }
         // for(auto i : edges)
         // cout<<"EDGE = "<<i->x<<
     }
@@ -327,6 +369,8 @@ public:
             }
         }
     }
+
+    
 };
 
 bool is_same_sign(double a, double b)
@@ -551,20 +595,39 @@ bool isClockwise(vector<pair<double, double>> points)
     return area < 0;
 }
 
+void initialzie_svg()
+{
+    Dimensions dimensions(100, 100);
+    doc = new Document("my_svg.svg", Layout(dimensions, Layout::BottomLeft));
+
+    // Red image border.
+    Polygon border(Stroke(1, Color::Red));
+    border << Point(0, 0) << Point(dimensions.width, 0)
+        << Point(dimensions.width, dimensions.height) << Point(0, dimensions.height);
+    *doc << border;
+}
+
 int main()
 {
     FASTIO;
-    // freopen("inputPy.txt", "w", stdout);
+    freopen("inputPy.txt", "w", stdout);
     int n;
     cin >> n;
     vector<pair<double, double>> points(n);
     for (int i = 0; i < n; i++)
+    {
         cin >> points[i].first >> points[i].second;
+        maxx = max(maxx,points[i].first);
+        maxy= max(maxy,points[i].second);
+        minx = min(minx,points[i].first);
+        miny = min(miny,points[i].second);
+    }
 
     if (!isClockwise(points))
         reverse(all(points));
     DCEL *ans = NULL;
     DCEL *polygon = new DCEL(points);
+    initialzie_svg();
     vector<vector<vector<pair<double, double>>>> OS;
     vector<vector<pair<double, double>>> first_polygons;
     long long CARD = 1e9;
@@ -611,7 +674,6 @@ int main()
         //     cout << p.first << " " << p.second << "\n";
         // cout << "----\n\n";
     }
-    polygon->set_faces();
     // polygon->add_edge(polygon->find_vertex(1,-1),polygon->find_vertex(3,0));
     // polygon->add_edge(polygon->find_vertex(0,0),polygon->find_vertex(3,0));
     // polygon->add_edge(polygon->find_vertex(1, 1), polygon->find_vertex(3, 0));
@@ -627,10 +689,12 @@ int main()
     // polygon->add_edge(polygon->find_vertex(1.0,1.0),polygon->find_vertex(0.0,0.0));
     // polygon->print();
     // polygon->write_edges();
-    polygon->print();
-    // polygon->merge();
+    // polygon->print();
+    polygon->merge();
+    polygon->set_faces();
     //  polygon->print();
-    // polygon->write_edges();
+    polygon->write_edges();
+    (*doc).save();
     /*
     vector<Vertex*> v = polygon->find_notch_vertices(polygon->vertices);
     for(auto i : v)
