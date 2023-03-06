@@ -38,8 +38,8 @@ if __name__ == "__main__":
         # Shape = [(50, 0), (50, 50), (0, 50), (0, 0)]
         file = open("inputPy.txt", "r")
         edgeList = []
-        maxx = 0
-        maxy = 0
+        maxx = -10000000
+        maxy = -10000000
         minx = 10000000
         miny = 10000000
 
@@ -61,12 +61,12 @@ if __name__ == "__main__":
             # print(line)
         print(maxx," ",minx," ",maxy," ",miny)
         for i in range(len(edgeList)):
-            edgeList[i][0][0] *= ((400)/(maxx-minx))
-            edgeList[i][0][1] *= ((400)/(maxy-miny))
-            edgeList[i][1][0] *= ((400)/(maxx-minx))
-            edgeList[i][1][1] *= ((400)/(maxy-miny))
+            edgeList[i][0][0] = (edgeList[i][0][0]-minx)*(400)/(maxx-minx) - 200
+            edgeList[i][0][1] = (edgeList[i][0][1]-miny)*(400)/(maxy-miny) - 200
+            edgeList[i][1][0] = (edgeList[i][1][0]-minx)*(400)/(maxx-minx) - 200
+            edgeList[i][1][1] = (edgeList[i][1][1]-miny)*(400)/(maxy-miny) - 200
 
-        # print(edgeList)
+        print(edgeList)
         drawPolyLine(edgeList)
 
         # Second square
